@@ -32,7 +32,7 @@ export default function AdminTicketsPage() {
       if (statusFilter) params.set('status', statusFilter);
       if (priorityFilter) params.set('priority', priorityFilter);
       if (search) params.set('search', search);
-      const { data } = await api.get(`/admin/tickets?${params}`);
+      const { data } = await api.get(`/tickets?${params}`);
       setTickets(data.tickets);
       setTotal(data.total);
     } catch {} finally { setLoading(false); }
@@ -42,7 +42,7 @@ export default function AdminTicketsPage() {
     e.stopPropagation();
     const engineerId = prompt('Enter Engineer ID to assign:');
     if (!engineerId) return;
-    try { await api.patch(`/admin/tickets/${ticketId}/assign`, { engineerId }); toast.success('Assigned'); fetchTickets(); } catch { toast.error('Failed'); }
+    try { await api.post(`/tickets/${ticketId}/assign`, { engineerId }); toast.success('Assigned'); fetchTickets(); } catch { toast.error('Failed'); }
   };
 
   return (

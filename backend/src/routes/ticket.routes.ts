@@ -6,7 +6,7 @@ import { upload } from '../middleware/upload.middleware';
 import { Role } from '@prisma/client';
 import {
   createTicket, getTickets, getTicketById, updateTicket,
-  assignTicket, closeTicket, reopenTicket, addInternalNote,
+  assignTicket, claimTicket, closeTicket, reopenTicket, addInternalNote,
   addAttachment, getTicketHistory, deleteTicket
 } from '../controllers/ticket.controller';
 
@@ -29,6 +29,7 @@ ticketRoutes.post('/', [
 ticketRoutes.get('/:id', getTicketById);
 ticketRoutes.patch('/:id', updateTicket);
 ticketRoutes.post('/:id/assign', authorize(Role.ADMIN, Role.SUPER_ADMIN, Role.ENGINEER), assignTicket);
+ticketRoutes.post('/:id/claim', authorize(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN), claimTicket);
 ticketRoutes.post('/:id/close', closeTicket);
 ticketRoutes.post('/:id/reopen', reopenTicket);
 ticketRoutes.post('/:id/notes', authorize(Role.ENGINEER, Role.ADMIN, Role.SUPER_ADMIN), [body('content').notEmpty()], validate, addInternalNote);

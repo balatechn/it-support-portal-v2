@@ -19,7 +19,7 @@ export default function AdminSLAPage() {
 
   const fetchConfigs = async () => {
     setLoading(true);
-    try { const { data } = await api.get('/admin/sla'); setConfigs(data); } catch {} finally { setLoading(false); }
+    try { const { data } = await api.get('/admin/sla-config'); setConfigs(data); } catch {} finally { setLoading(false); }
   };
 
   const openEdit = (c: SLAConfig) => { setEditing(c); setForm({ firstResponseHours: c.firstResponseHours, resolutionHours: c.resolutionHours, escalationHours: c.escalationHours }); };
@@ -28,7 +28,7 @@ export default function AdminSLAPage() {
     if (!editing) return;
     setSaving(true);
     try {
-      await api.put(`/admin/sla/${editing.id}`, form);
+      await api.put(`/admin/sla-config/${editing.id}`, form);
       toast.success('SLA config updated');
       setEditing(null);
       fetchConfigs();

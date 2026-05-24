@@ -25,13 +25,13 @@ export default function NotificationsPage() {
   }, []);
 
   const markAll = async () => {
-    await api.post('/notifications/mark-all-read');
+    await api.patch('/notifications/mark-all-read');
     setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     toast.success('All marked as read');
   };
 
   const markOne = async (id: string) => {
-    await api.post(`/notifications/${id}/read`);
+    await api.patch(`/notifications/${id}/read`);
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
   };
 

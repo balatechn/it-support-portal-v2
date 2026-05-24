@@ -8,7 +8,7 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 
 const COLORS = ['#3b82f6', '#f59e0b', '#ef4444', '#10b981', '#8b5cf6', '#f97316', '#06b6d4', '#84cc16', '#ec4899'];
 
-interface DashboardStats { totalTickets: number; openTickets: number; inProgressTickets: number; resolvedToday: number; avgResolutionHours: number; slaBreach: number; activeUsers: number; activeEngineers: number; }
+interface DashboardStats { total: number; open: number; inProgress: number; resolvedToday: number; avgResolutionHours: number; slaBreach: number; activeUsers: number; totalTickets: number; openTickets: number; }
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
@@ -20,10 +20,10 @@ export default function AdminDashboard() {
   useEffect(() => {
     const load = async () => {
       try {
-        const [statsRes, reportsRes] = await Promise.all([api.get('/admin/stats'), api.get('/reports/overview')]);
+        const [statsRes, reportsRes] = await Promise.all([api.get('/admin/dashboard'), api.get('/reports/overview')]);
         setStats(statsRes.data);
         setTrendData(reportsRes.data.trend || []);
-        setCategoryData(reportsRes.data.byCategory?.map((c: { category: string; _count: number }) => ({ name: c.category.replace('_', ' '), value: c._count })) || []);
+        setCategoryData(reportsRes.data.topCategories?.map((c: { category: string; _count: number }) => ({ name: c.category.replace(/_/g, ' '), value: c._count })) || []);
         setPriorityData([
           { name: 'Low', count: reportsRes.data.byPriority?.LOW || 0, color: '#10b981' },
           { name: 'Medium', count: reportsRes.data.byPriority?.MEDIUM || 0, color: '#f59e0b' },
@@ -36,8 +36,8 @@ export default function AdminDashboard() {
   }, []);
 
   const statCards = [
-    { label: 'Total Tickets', value: stats?.totalTickets, icon: Ticket, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30', href: '/admin/tickets' },
-    { label: 'Open Tickets', value: stats?.openTickets, icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/30', href: '/admin/tickets?status=OPEN' },
+    { label: 'Total Tickets', value: stats?.total, icon: Ticket, color: 'text-blue-600', bg: 'bg-blue-50 dark:bg-blue-950/30', href: '/admin/tickets' },
+    { label: 'Open Tickets', value: stats?.open, icon: Clock, color: 'text-orange-600', bg: 'bg-orange-50 dark:bg-orange-950/30', href: '/admin/tickets?status=OPEN' },
     { label: 'Resolved Today', value: stats?.resolvedToday, icon: CheckCircle2, color: 'text-emerald-600', bg: 'bg-emerald-50 dark:bg-emerald-950/30', href: null },
     { label: 'SLA Breaches', value: stats?.slaBreach, icon: AlertTriangle, color: 'text-red-600', bg: 'bg-red-50 dark:bg-red-950/30', href: null },
     { label: 'Active Users', value: stats?.activeUsers, icon: Users, color: 'text-purple-600', bg: 'bg-purple-50 dark:bg-purple-950/30', href: '/admin/users' },

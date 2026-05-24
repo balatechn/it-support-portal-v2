@@ -22,7 +22,7 @@ export default function ProfilePage() {
     if (pwForm.newPw !== pwForm.confirm) { toast.error('Passwords do not match'); return; }
     if (pwForm.newPw.length < 8) { toast.error('Password must be at least 8 characters'); return; }
     setChangingPw(true);
-    try { await api.post('/auth/change-password', { currentPassword: pwForm.current, newPassword: pwForm.newPw }); toast.success('Password changed'); setPwForm({ current: '', newPw: '', confirm: '' }); } catch { toast.error('Invalid current password'); } finally { setChangingPw(false); }
+    try { await api.put('/auth/change-password', { currentPassword: pwForm.current, newPassword: pwForm.newPw }); toast.success('Password changed'); setPwForm({ current: '', newPw: '', confirm: '' }); } catch { toast.error('Invalid current password'); } finally { setChangingPw(false); }
   };
 
   return (

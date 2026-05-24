@@ -148,6 +148,22 @@ export const assignTicket = async (req: AuthRequest, res: Response): Promise<voi
   res.json(ticket);
 };
 
+export const claimTicket = async (req: AuthRequest, res: Response): Promise<void> => {
+  const engineerId = req.user!.id;
+  try {
+    const ticket = await prisma.ticket.update({
+      where: { id: req.params.id },
+      data: { assignedToId: engineerId, status: TicketStatus.IN_PROGRESS },
+      include: { assignedTo: { select: { id: true, name: true, email: true } } },
+    });
+    await prisma.ticketHistory.create({ data: { ticketId: ticket.id, field: 'assignedTo', newValue: engineerId, changedBy: engineerId } });
+    notifyUsers([engineerId], 'ticket:assigned', { ticketId: ticket.id });
+    res.json(ticket);
+  } catch {
+    res.status(404).json({ message: 'Ticket not found' });
+  }
+};
+
 export const closeTicket = async (req: AuthRequest, res: Response): Promise<void> => {
   const ticket = await prisma.ticket.update({
     where: { id: req.params.id },

@@ -4,11 +4,21 @@ import { AuthRequest } from '../middleware/auth.middleware';
 import { Role, TicketStatus } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
+// In-memory settings store (persists for server lifetime)
+let appSettings = {
+  siteName: 'IT Support Portal',
+  supportEmail: 'support@company.com',
+  maxFileSize: 10,
+  maintenanceMode: false,
+  emailNotifications: true,
+  autoAssign: true,
+};
+
 export const getDashboardStats = async (_req: AuthRequest, res: Response): Promise<void> => {
   const now = new Date();
   const todayStart = new Date(now.setHours(0, 0, 0, 0));
 
-  const [total, open, inProgress, resolved, closed, escalated, critical, slaBreached, todayCreated, aiResolved] = await Promise.all([
+  const [total, open, inProgress, resolved, closed, escalated, critical, slaBreached, todayCreated, aiResolved, activeUsers, resolvedToday, resolvedTickets] = await Promise.all([
     prisma.ticket.count(),
     prisma.ticket.count({ where: { status: TicketStatus.OPEN } }),
     prisma.ticket.count({ where: { status: TicketStatus.IN_PROGRESS } }),
@@ -19,12 +29,27 @@ export const getDashboardStats = async (_req: AuthRequest, res: Response): Promi
     prisma.ticket.count({ where: { slaBreach: true } }),
     prisma.ticket.count({ where: { createdAt: { gte: todayStart } } }),
     prisma.ticket.count({ where: { aiResolved: true } }),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.ticket.count({ where: { resolvedAt: { gte: todayStart } } }),
+    prisma.ticket.findMany({ where: { resolvedAt: { not: null } }, select: { createdAt: true, resolvedAt: true }, take: 100, orderBy: { resolvedAt: 'desc' } }),
   ]);
 
   const totalResolved = resolved + closed;
   const aiResolutionRate = totalResolved > 0 ? Math.round((aiResolved / totalResolved) * 100) : 0;
 
-  res.json({ total, open, inProgress, resolved, closed, escalated, critical, slaBreached, todayCreated, aiResolved, aiResolutionRate });
+  let avgResolutionHours = 0;
+  if (resolvedTickets.length > 0) {
+    const totalMs = resolvedTickets.reduce((sum, t) => sum + (t.resolvedAt!.getTime() - t.createdAt.getTime()), 0);
+    avgResolutionHours = Math.round(totalMs / resolvedTickets.length / (1000 * 60 * 60));
+  }
+
+  res.json({
+    // Original fields
+    total, open, inProgress, resolved, closed, escalated, critical, slaBreached, todayCreated, aiResolved, aiResolutionRate,
+    // Aliased fields for frontend compatibility
+    totalTickets: total, openTickets: open, inProgressTickets: inProgress,
+    resolvedToday, slaBreach: slaBreached, activeUsers, avgResolutionHours,
+  });
 };
 
 export const getTicketTrends = async (_req: AuthRequest, res: Response): Promise<void> => {
@@ -106,8 +131,18 @@ export const deleteTemplate = async (req: AuthRequest, res: Response): Promise<v
 };
 
 export const getSLAConfig = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const configs = await prisma.sLAConfig.findMany();
-  res.json(configs);
+  const configs = await prisma.sLAConfig.findMany({ orderBy: { priority: 'asc' } });
+  // Transform minutes to hours for frontend
+  const transformed = configs.map(c => ({
+    id: c.id,
+    priority: c.priority,
+    firstResponseHours: Math.round(c.responseTime / 60),
+    resolutionHours: Math.round(c.resolutionTime / 60),
+    escalationHours: Math.round(c.resolutionTime / 60 * 0.75), // 75% of resolution time
+    responseTime: c.responseTime,
+    resolutionTime: c.resolutionTime,
+  }));
+  res.json(transformed);
 };
 
 export const updateSLAConfig = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -118,12 +153,53 @@ export const updateSLAConfig = async (req: AuthRequest, res: Response): Promise<
   res.json(updated);
 };
 
-export const getAllUsers = async (_req: AuthRequest, res: Response): Promise<void> => {
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, department: true, isActive: true, lastLoginAt: true, createdAt: true },
-    orderBy: { createdAt: 'desc' },
-  });
-  res.json(users);
+export const updateSLAConfigById = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { firstResponseHours, resolutionHours } = req.body as { firstResponseHours: number; resolutionHours: number };
+  try {
+    const updated = await prisma.sLAConfig.update({
+      where: { id: req.params.id },
+      data: {
+        responseTime: Math.round(firstResponseHours * 60),
+        resolutionTime: Math.round(resolutionHours * 60),
+      },
+    });
+    res.json({ ...updated, firstResponseHours, resolutionHours, escalationHours: Math.round(resolutionHours * 0.75) });
+  } catch {
+    res.status(404).json({ message: 'SLA config not found' });
+  }
+};
+
+export const getSettings = (_req: AuthRequest, res: Response): void => {
+  res.json(appSettings);
+};
+
+export const updateSettings = (req: AuthRequest, res: Response): void => {
+  appSettings = { ...appSettings, ...req.body };
+  res.json(appSettings);
+};
+
+export const getAllUsers = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { search, role, page = '1', limit = '25' } = req.query as Record<string, string>;
+  const take = Math.min(parseInt(limit), 100);
+  const skip = (parseInt(page) - 1) * take;
+
+  const where: Record<string, unknown> = {};
+  if (role) where.role = role;
+  if (search) where.OR = [
+    { name: { contains: search, mode: 'insensitive' } },
+    { email: { contains: search, mode: 'insensitive' } },
+  ];
+
+  const [users, total] = await Promise.all([
+    prisma.user.findMany({
+      where,
+      select: { id: true, name: true, email: true, role: true, department: true, isActive: true, lastLoginAt: true, createdAt: true, _count: { select: { createdTickets: true } } },
+      orderBy: { createdAt: 'desc' },
+      skip, take,
+    }),
+    prisma.user.count({ where }),
+  ]);
+  res.json({ users, total, page: parseInt(page), totalPages: Math.ceil(total / take) });
 };
 
 export const createUserByAdmin = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -141,4 +217,21 @@ export const createUserByAdmin = async (req: AuthRequest, res: Response): Promis
 export const updateUserRole = async (req: AuthRequest, res: Response): Promise<void> => {
   const user = await prisma.user.update({ where: { id: req.params.id }, data: { role: req.body.role }, select: { id: true, name: true, role: true } });
   res.json(user);
+};
+
+export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
+  const { role, isActive } = req.body;
+  const data: Record<string, unknown> = {};
+  if (role !== undefined) data.role = role;
+  if (isActive !== undefined) data.isActive = isActive;
+  try {
+    const user = await prisma.user.update({
+      where: { id: req.params.id },
+      data,
+      select: { id: true, name: true, email: true, role: true, isActive: true },
+    });
+    res.json(user);
+  } catch {
+    res.status(404).json({ message: 'User not found' });
+  }
 };

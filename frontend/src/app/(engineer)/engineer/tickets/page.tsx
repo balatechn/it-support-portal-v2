@@ -35,7 +35,7 @@ export default function EngineerTicketsPage() {
       if (priorityFilter) params.set('priority', priorityFilter);
       if (search) params.set('search', search);
       if (assignedToMe) params.set('assignedToMe', 'true');
-      const { data } = await api.get(`/engineer/tickets?${params}`);
+      const { data } = await api.get(`/tickets?${params}`);
       setTickets(data.tickets);
       setTotal(data.total);
     } catch {} finally { setLoading(false); }
@@ -43,7 +43,7 @@ export default function EngineerTicketsPage() {
 
   const claimTicket = async (e: React.MouseEvent, ticketId: string) => {
     e.stopPropagation();
-    try { await api.post(`/engineer/tickets/${ticketId}/claim`); toast.success('Ticket claimed'); fetchTickets(); } catch { toast.error('Failed to claim'); }
+    try { await api.post(`/tickets/${ticketId}/claim`); toast.success('Ticket claimed'); fetchTickets(); } catch { toast.error('Failed to claim'); }
   };
 
   return (

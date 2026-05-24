@@ -20,7 +20,7 @@ export default function EngineerDashboard() {
       try {
         const [statsRes, ticketsRes] = await Promise.all([
           api.get('/reports/engineer-stats'),
-          api.get('/engineer/tickets?assignedToMe=true&status=OPEN,IN_PROGRESS,ESCALATED&limit=10'),
+          api.get('/tickets?assignedToMe=true&status=OPEN,IN_PROGRESS,ESCALATED&limit=10'),
         ]);
         setStats(statsRes.data);
         setQueue(ticketsRes.data.tickets || []);
