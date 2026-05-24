@@ -33,8 +33,9 @@ export default function AdminTicketsPage() {
       if (priorityFilter) params.set('priority', priorityFilter);
       if (search) params.set('search', search);
       const { data } = await api.get(`/tickets?${params}`);
-      setTickets(data.tickets);
-      setTotal(data.total);
+      const list = Array.isArray(data) ? data : (data.tickets || []);
+      setTickets(list);
+      setTotal(Array.isArray(data) ? data.length : (data.total || 0));
     } catch {} finally { setLoading(false); }
   };
 

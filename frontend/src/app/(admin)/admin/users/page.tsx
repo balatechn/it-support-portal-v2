@@ -37,8 +37,10 @@ export default function AdminUsersPage() {
       if (search) params.set('search', search);
       if (roleFilter) params.set('role', roleFilter);
       const { data } = await api.get(`/admin/users?${params}`);
-      setUsers(data.users);
-      setTotal(data.total);
+      // Handle both paginated { users, total } and legacy plain array
+      const list = Array.isArray(data) ? data : (data.users || []);
+      setUsers(list);
+      setTotal(Array.isArray(data) ? data.length : (data.total || 0));
     } catch {} finally { setLoading(false); }
   };
 
@@ -91,7 +93,7 @@ export default function AdminUsersPage() {
             <tbody className="divide-y divide-border">
               {loading ? (
                 <tr><td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">Loading...</td></tr>
-              ) : users.map(u => (
+              ) : (users || []).map(u => (
                 <tr key={u.id} className="hover:bg-muted/50 transition">
                   <td className="px-4 py-3 font-medium">{u.name}</td>
                   <td className="px-4 py-3 text-muted-foreground text-xs">{u.email}</td>

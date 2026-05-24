@@ -36,8 +36,9 @@ export default function EngineerTicketsPage() {
       if (search) params.set('search', search);
       if (assignedToMe) params.set('assignedToMe', 'true');
       const { data } = await api.get(`/tickets?${params}`);
-      setTickets(data.tickets);
-      setTotal(data.total);
+      const list = Array.isArray(data) ? data : (data.tickets || []);
+      setTickets(list);
+      setTotal(Array.isArray(data) ? data.length : (data.total || 0));
     } catch {} finally { setLoading(false); }
   };
 
