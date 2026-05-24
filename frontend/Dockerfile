@@ -3,7 +3,8 @@ WORKDIR /app
 
 FROM base AS deps
 COPY package*.json ./
-RUN npm install
+# Force full install (devDeps needed for next build). Override NODE_ENV=production injected by Coolify.
+RUN npm install --include=dev
 
 FROM base AS builder
 ARG NEXT_PUBLIC_API_URL

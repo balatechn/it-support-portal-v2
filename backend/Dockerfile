@@ -7,7 +7,8 @@ RUN npm install --omit=dev
 
 FROM base AS builder
 COPY package*.json ./
-RUN npm install
+# Force full install (devDeps needed for tsc). Override NODE_ENV=production injected by Coolify.
+RUN npm install --include=dev
 COPY . .
 RUN npx prisma generate
 RUN npm run build
