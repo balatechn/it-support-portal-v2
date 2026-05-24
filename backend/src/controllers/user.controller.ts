@@ -41,7 +41,7 @@ export const getUserById = async (req: AuthRequest, res: Response): Promise<void
 
 export const updateUser = async (req: AuthRequest, res: Response): Promise<void> => {
   const { name, mobile, departmentId, avatarUrl } = req.body;
-  if (req.user!.id !== req.params.id && ![Role.ADMIN, Role.SUPER_ADMIN].includes(req.user!.role)) {
+  if (req.user!.id !== req.params.id && !([Role.ADMIN, Role.SUPER_ADMIN] as string[]).includes(req.user!.role)) {
     res.status(403).json({ message: 'Access denied' }); return;
   }
   const user = await prisma.user.update({

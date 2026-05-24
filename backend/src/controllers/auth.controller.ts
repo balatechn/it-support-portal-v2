@@ -8,8 +8,8 @@ import { emailService } from '../services/email.service';
 import { logger } from '../utils/logger';
 
 const signTokens = (userId: string, email: string, role: string, name: string) => {
-  const access = jwt.sign({ id: userId, email, role, name }, process.env.JWT_SECRET!, { expiresIn: process.env.JWT_EXPIRES_IN || '1d' });
-  const refresh = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: process.env.JWT_REFRESH_EXPIRES_IN || '7d' });
+  const access = jwt.sign({ id: userId, email, role, name }, process.env.JWT_SECRET!, { expiresIn: (process.env.JWT_EXPIRES_IN || '1d') as any });
+  const refresh = jwt.sign({ id: userId }, process.env.JWT_REFRESH_SECRET!, { expiresIn: (process.env.JWT_REFRESH_EXPIRES_IN || '7d') as any });
   return { access, refresh };
 };
 
