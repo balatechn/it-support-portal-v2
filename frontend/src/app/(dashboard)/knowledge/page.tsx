@@ -75,7 +75,7 @@ export default function KnowledgeBasePage() {
                 <ArrowRight size={14} className="text-muted-foreground group-hover:translate-x-0.5 transition-transform shrink-0 mt-0.5" />
               </div>
               <h3 className="font-semibold mb-2 line-clamp-2">{a.title}</h3>
-              <p className="text-sm text-muted-foreground line-clamp-3">{a.content.replace(/#|*|`/g, '').substring(0, 120)}...</p>
+              <p className="text-sm text-muted-foreground line-clamp-3">{a.content.replace(/[#*`]/g, '').substring(0, 120)}...</p>
               <div className="flex items-center justify-between mt-4 pt-3 border-t border-border text-xs text-muted-foreground">
                 <span>by {a.author.name} • {timeAgo(a.createdAt)}</span>
                 <div className="flex items-center gap-3">
