@@ -46,7 +46,7 @@ export default function TicketsPage() {
           <h1 className="text-2xl font-bold">My Tickets</h1>
           <p className="text-muted-foreground text-sm">{total} total tickets</p>
         </div>
-        <Link href="/chat" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition">
+        <Link href="/tickets/new" className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2.5 rounded-xl font-medium hover:bg-primary/90 transition">
           <Plus size={16} /> New Request
         </Link>
       </div>
