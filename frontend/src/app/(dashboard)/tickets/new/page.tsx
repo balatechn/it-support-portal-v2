@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import api from '@/lib/api';
 import { CATEGORY_LABELS } from '@/lib/utils';
-import { ArrowLeft, Ticket, Paperclip, X, Loader2, AlertCircle } from 'lucide-react';
+import { ArrowLeft, Ticket, Paperclip, X, Loader2, AlertCircle, Bot, Sparkles, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 const PRIORITIES = [
@@ -20,6 +20,7 @@ export default function NewTicketPage() {
   const router = useRouter();
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const [dismissed, setDismissed] = useState(false);
   const [form, setForm] = useState({
     title: '',
     description: '',
@@ -99,8 +100,39 @@ export default function NewTicketPage() {
         </div>
       </div>
 
+      {/* AI chat nudge */}
+      {!dismissed && (
+        <div className="flex items-start gap-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-2xl px-5 py-4">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-blue-700 rounded-xl flex items-center justify-center shrink-0 shadow-sm">
+            <Bot size={20} className="text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-sm text-blue-900 dark:text-blue-100 flex items-center gap-1.5">
+              <Sparkles size={14} /> Try our AI assistant first — it solves most issues instantly!
+            </p>
+            <p className="text-xs text-blue-700 dark:text-blue-300 mt-0.5">
+              Get step-by-step guidance for WiFi, VPN, printer, password resets and more — no waiting for an engineer.
+            </p>
+            <div className="flex items-center gap-3 mt-3">
+              <Link
+                href="/chat"
+                className="flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-xs font-medium transition"
+              >
+                <Bot size={13} /> Chat with AI <ChevronRight size={13} />
+              </Link>
+              <button
+                type="button"
+                onClick={() => setDismissed(true)}
+                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                No thanks, raise a ticket
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Title */}
         <div className="bg-card border border-border rounded-2xl p-5 space-y-4">
           <h2 className="font-semibold text-sm text-muted-foreground uppercase tracking-wide">Issue Details</h2>
 

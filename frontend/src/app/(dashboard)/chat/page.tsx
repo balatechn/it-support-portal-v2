@@ -1,10 +1,11 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useAuthStore } from '@/store/auth.store';
 import api from '@/lib/api';
 import { cn, CATEGORY_LABELS } from '@/lib/utils';
-import { Bot, Send, User, Loader2, AlertTriangle, CheckCircle2, Ticket, Sparkles, RefreshCw } from 'lucide-react';
+import { Bot, Send, Loader2, AlertTriangle, Ticket, Sparkles, RefreshCw, PenLine } from 'lucide-react';
 import toast from 'react-hot-toast';
 import ReactMarkdown from 'react-markdown';
 
@@ -110,6 +111,9 @@ export default function AIChatPage() {
               {escalating ? <Loader2 size={14} className="animate-spin" /> : <Ticket size={14} />} Escalate
             </button>
           )}
+          <Link href="/tickets/new" className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground border border-border hover:bg-muted px-3 py-1.5 rounded-lg transition" title="Raise a ticket directly">
+            <PenLine size={13} /> Raise Ticket
+          </Link>
           <button onClick={resetChat} className="p-2 text-muted-foreground hover:text-foreground hover:bg-muted rounded-lg transition" title="Reset chat">
             <RefreshCw size={16} />
           </button>
